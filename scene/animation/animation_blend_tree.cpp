@@ -915,12 +915,11 @@ Vector2 AnimationNodeBlendTree::get_node_position(const StringName &p_node) cons
 	return nodes[p_node].position;
 }
 
-void AnimationNodeBlendTree::get_child_nodes(List<ChildNode> *r_child_nodes) {
-	ScriptInstance *script = get_script_instance();
-	if (script != nullptr && script->has_method("_get_child_nodes")) {
-		AnimationNode::get_child_nodes(r_child_nodes);
-	} else {
+int AnimationNodeBlendTree::get_child_nodes(List<ChildNode> *r_child_nodes) {
+	int child_count = AnimationNode::get_child_nodes(r_child_nodes);
+	if (child_count == 0) {
 		Vector<StringName> ns;
+		child_count = nodes.size();
 
 		for (Map<StringName, Node>::Element *E = nodes.front(); E; E = E->next()) {
 			ns.push_back(E->key());
@@ -935,6 +934,7 @@ void AnimationNodeBlendTree::get_child_nodes(List<ChildNode> *r_child_nodes) {
 			r_child_nodes->push_back(cn);
 		}
 	}
+	return child_count;
 }
 
 bool AnimationNodeBlendTree::has_node(const StringName &p_name) const {

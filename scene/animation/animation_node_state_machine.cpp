@@ -603,11 +603,10 @@ StringName AnimationNodeStateMachine::get_node_name(const Ref<AnimationNode> &p_
 	ERR_FAIL_V(StringName());
 }
 
-void AnimationNodeStateMachine::get_child_nodes(List<ChildNode> *r_child_nodes) {
-	ScriptInstance *script = get_script_instance();
-	if (script != nullptr && script->has_method("_get_child_nodes")) {
-		AnimationNode::get_child_nodes(r_child_nodes);
-	} else {
+int AnimationNodeStateMachine::get_child_nodes(List<ChildNode> *r_child_nodes) {
+	int child_count = AnimationNode::get_child_nodes(r_child_nodes);
+
+	if (child_count == 0) {
 		Vector<StringName> nodes;
 
 		for (Map<StringName, State>::Element *E = states.front(); E; E = E->next()) {
@@ -622,7 +621,9 @@ void AnimationNodeStateMachine::get_child_nodes(List<ChildNode> *r_child_nodes) 
 			cn.node = states[cn.name].node;
 			r_child_nodes->push_back(cn);
 		}
+		child_count = nodes.size();
 	}
+	return child_count;
 }
 
 bool AnimationNodeStateMachine::has_node(const StringName &p_name) const {

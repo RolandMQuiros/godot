@@ -189,7 +189,7 @@ public:
 	void set_node_position(const StringName &p_name, const Vector2 &p_position);
 	Vector2 get_node_position(const StringName &p_name) const;
 
-	virtual void get_child_nodes(List<ChildNode> *r_child_nodes);
+	virtual int get_child_nodes(List<ChildNode> *r_child_nodes) override;
 
 	bool has_transition(const StringName &p_from, const StringName &p_to) const;
 	int find_transition(const StringName &p_from, const StringName &p_to) const;

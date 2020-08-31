@@ -127,7 +127,7 @@ public:
 		Ref<AnimationNode> node;
 	};
 
-	virtual void get_child_nodes(List<ChildNode> *r_child_nodes);
+	virtual int get_child_nodes(List<ChildNode> *r_child_nodes);
 
 	virtual float process(float p_time, bool p_seek);
 	virtual String get_caption() const;
@@ -152,7 +152,7 @@ public:
 	AnimationNode();
 
 private:
-	Dictionary get_child_nodes_bind();
+	Dictionary _get_child_nodes_bind();
 };
 
 VARIANT_ENUM_CAST(AnimationNode::FilterAction)

@@ -46,11 +46,11 @@ Variant AnimationNodeBlendSpace2D::get_parameter_default_value(const StringName 
 	}
 }
 
-void AnimationNodeBlendSpace2D::get_child_nodes(List<ChildNode> *r_child_nodes) {
-	ScriptInstance *script = get_script_instance();
-	if (script != nullptr && script->has_method("_get_child_nodes")) {
-		AnimationNode::get_child_nodes(r_child_nodes);
-	} else {
+int AnimationNodeBlendSpace2D::get_child_nodes(List<ChildNode> *r_child_nodes) {
+	int child_count = AnimationNode::get_child_nodes(r_child_nodes);
+	
+	if (child_count == 0) {
+		child_count = blend_points_used;
 		for (int i = 0; i < blend_points_used; i++) {
 			ChildNode cn;
 			cn.name = itos(i);
@@ -58,6 +58,8 @@ void AnimationNodeBlendSpace2D::get_child_nodes(List<ChildNode> *r_child_nodes) 
 			r_child_nodes->push_back(cn);
 		}
 	}
+
+	return child_count;
 }
 
 void AnimationNodeBlendSpace2D::add_blend_point(const Ref<AnimationRootNode> &p_node, const Vector2 &p_position, int p_at_index) {

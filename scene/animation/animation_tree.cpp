@@ -72,10 +72,9 @@ Variant AnimationNode::get_parameter(const StringName &p_name) const {
 	return state->tree->property_map[path];
 }
 
-void AnimationNode::get_child_nodes(List<ChildNode> *r_child_nodes) {
-
+int AnimationNode::get_child_nodes(List<ChildNode> *r_child_nodes) {
 	if (get_script_instance()) {
-		Dictionary cn = get_script_instance()->call("_get_child_nodes");
+		Dictionary cn = get_script_instance()->call("get_child_nodes");
 		List<Variant> keys;
 		cn.get_key_list(&keys);
 		for (List<Variant>::Element *E = keys.front(); E; E = E->next()) {
@@ -85,17 +84,19 @@ void AnimationNode::get_child_nodes(List<ChildNode> *r_child_nodes) {
 			// Some rudimentary type safety
 			ERR_CONTINUE_MSG(
 				node.get_type() != Variant::OBJECT,
-				"Expected 'AnimationNode' type values from _get_child_node. Got '" + Variant::get_type_name(node.get_type()) + "' instead."
+				"Expected 'AnimationNode' type values from get_child_nodes. Got '" + Variant::get_type_name(node.get_type()) + "' instead."
 			);
 
 			child.name = E->get();
 			child.node = cn[E->get()];
 			r_child_nodes->push_back(child);
 		}
+		return keys.size();
 	}
+	return 0;
 }
 
-Dictionary AnimationNode::get_child_nodes_bind() {
+Dictionary AnimationNode::_get_child_nodes_bind() {
 	// Exposes get_child_nodes to all scripts extending AnimationNode, including native subclasses such as AnimationNodeStateMachine
 
 	List<ChildNode> nodes;
@@ -449,12 +450,13 @@ void AnimationNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_parameter", "name", "value"), &AnimationNode::set_parameter);
 	ClassDB::bind_method(D_METHOD("get_parameter", "name"), &AnimationNode::get_parameter);
 
-	ClassDB::bind_method(D_METHOD("get_child_nodes"), &AnimationNode::get_child_nodes_bind);
+	ClassDB::bind_method(D_METHOD("_get_child_nodes"), &AnimationNode::_get_child_nodes_bind);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "child_nodes", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "", "_get_child_nodes");
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "filter_enabled", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_filter_enabled", "is_filter_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "filters", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_filters", "_get_filters");
 
-	BIND_VMETHOD(MethodInfo(Variant::DICTIONARY, "_get_child_nodes"));
+	BIND_VMETHOD(MethodInfo(Variant::DICTIONARY, "get_child_nodes"));
 	BIND_VMETHOD(MethodInfo(Variant::ARRAY, "get_parameter_list"));
 	BIND_VMETHOD(MethodInfo(Variant::OBJECT, "get_child_by_name", PropertyInfo(Variant::STRING, "name")));
 	{

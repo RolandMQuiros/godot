@@ -886,19 +886,24 @@ Vector2 AnimationNodeBlendTree::get_node_position(const StringName &p_node) cons
 }
 
 void AnimationNodeBlendTree::get_child_nodes(List<ChildNode> *r_child_nodes) {
-	Vector<StringName> ns;
+	ScriptInstance *script = get_script_instance();
+	if (script != nullptr && script->has_method("_get_child_nodes")) {
+		AnimationNode::get_child_nodes(r_child_nodes);
+	} else {
+		Vector<StringName> ns;
 
-	for (Map<StringName, Node>::Element *E = nodes.front(); E; E = E->next()) {
-		ns.push_back(E->key());
-	}
+		for (Map<StringName, Node>::Element *E = nodes.front(); E; E = E->next()) {
+			ns.push_back(E->key());
+		}
 
-	ns.sort_custom<StringName::AlphCompare>();
+		ns.sort_custom<StringName::AlphCompare>();
 
-	for (int i = 0; i < ns.size(); i++) {
-		ChildNode cn;
-		cn.name = ns[i];
-		cn.node = nodes[cn.name].node;
-		r_child_nodes->push_back(cn);
+		for (int i = 0; i < ns.size(); i++) {
+			ChildNode cn;
+			cn.name = ns[i];
+			cn.node = nodes[cn.name].node;
+			r_child_nodes->push_back(cn);
+		}
 	}
 }
 

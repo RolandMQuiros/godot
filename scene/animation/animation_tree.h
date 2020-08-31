@@ -147,6 +147,9 @@ public:
 	virtual Ref<AnimationNode> get_child_by_name(const StringName &p_name);
 
 	AnimationNode();
+
+private:
+	Dictionary get_child_nodes_bind();
 };
 
 VARIANT_ENUM_CAST(AnimationNode::FilterAction)

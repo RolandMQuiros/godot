@@ -49,11 +49,16 @@ Variant AnimationNodeBlendSpace2D::get_parameter_default_value(const StringName 
 }
 
 void AnimationNodeBlendSpace2D::get_child_nodes(List<ChildNode> *r_child_nodes) {
-	for (int i = 0; i < blend_points_used; i++) {
-		ChildNode cn;
-		cn.name = itos(i);
-		cn.node = blend_points[i].node;
-		r_child_nodes->push_back(cn);
+	ScriptInstance *script = get_script_instance();
+	if (script != nullptr && script->has_method("_get_child_nodes")) {
+		AnimationNode::get_child_nodes(r_child_nodes);
+	} else {
+		for (int i = 0; i < blend_points_used; i++) {
+			ChildNode cn;
+			cn.name = itos(i);
+			cn.node = blend_points[i].node;
+			r_child_nodes->push_back(cn);
+		}
 	}
 }
 

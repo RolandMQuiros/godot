@@ -604,19 +604,24 @@ StringName AnimationNodeStateMachine::get_node_name(const Ref<AnimationNode> &p_
 }
 
 void AnimationNodeStateMachine::get_child_nodes(List<ChildNode> *r_child_nodes) {
-	Vector<StringName> nodes;
+	ScriptInstance *script = get_script_instance();
+	if (script != nullptr && script->has_method("_get_child_nodes")) {
+		AnimationNode::get_child_nodes(r_child_nodes);
+	} else {
+		Vector<StringName> nodes;
 
-	for (Map<StringName, State>::Element *E = states.front(); E; E = E->next()) {
-		nodes.push_back(E->key());
-	}
+		for (Map<StringName, State>::Element *E = states.front(); E; E = E->next()) {
+			nodes.push_back(E->key());
+		}
 
-	nodes.sort_custom<StringName::AlphCompare>();
+		nodes.sort_custom<StringName::AlphCompare>();
 
-	for (int i = 0; i < nodes.size(); i++) {
-		ChildNode cn;
-		cn.name = nodes[i];
-		cn.node = states[cn.name].node;
-		r_child_nodes->push_back(cn);
+		for (int i = 0; i < nodes.size(); i++) {
+			ChildNode cn;
+			cn.name = nodes[i];
+			cn.node = states[cn.name].node;
+			r_child_nodes->push_back(cn);
+		}
 	}
 }
 

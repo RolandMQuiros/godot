@@ -129,6 +129,7 @@ public:
 
 	virtual int get_child_nodes(List<ChildNode> *r_child_nodes);
 
+	bool is_processing() const;
 	virtual float process(float p_time, bool p_seek);
 	virtual String get_caption() const;
 
@@ -152,6 +153,11 @@ public:
 	AnimationNode();
 
 private:
+	bool did_process;
+	bool was_processed;
+	virtual void on_play();
+	virtual void on_stop();
+
 	Dictionary _get_child_nodes_bind();
 };
 
@@ -262,6 +268,7 @@ private:
 	Set<TrackCache *> playing_caches;
 
 	Ref<AnimationNode> root;
+	List<AnimationNode::ChildNode> all_nodes;
 
 	AnimationProcessMode process_mode;
 	bool active;

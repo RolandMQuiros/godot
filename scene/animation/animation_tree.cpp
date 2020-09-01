@@ -141,11 +141,28 @@ void AnimationNode::blend_animation(const StringName &p_animation, float p_time,
 	state->animation_states.push_back(anim_state);
 }
 
+void AnimationNode::on_play() {
+	if (get_script_instance()) {
+		get_script_instance()->call("on_play");
+	}
+}
+
+void AnimationNode::on_stop() {
+	if (get_script_instance()) {
+		get_script_instance()->call("on_stop");
+	}
+}
+
+bool AnimationNode::is_processing() const {
+	return was_processed;
+}
+
 float AnimationNode::_pre_process(const StringName &p_base_path, AnimationNode *p_parent, State *p_state, float p_time, bool p_seek, const Vector<StringName> &p_connections) {
 	base_path = p_base_path;
 	parent = p_parent;
 	connections = p_connections;
 	state = p_state;
+	did_process = true;
 
 	float t = process(p_time, p_seek);
 
@@ -444,8 +461,14 @@ void AnimationNode::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_get_child_nodes"), &AnimationNode::_get_child_nodes_bind);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "child_nodes", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "", "_get_child_nodes");
 
+	ClassDB::bind_method(D_METHOD("_get_is_processing"), &AnimationNode::is_processing);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "is_processing", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "", "_get_is_processing");
+
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "filter_enabled", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_filter_enabled", "is_filter_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "filters", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_filters", "_get_filters");
+
+	BIND_VMETHOD(MethodInfo("on_play"));
+	BIND_VMETHOD(MethodInfo("on_stop"));
 
 	BIND_VMETHOD(MethodInfo(Variant::DICTIONARY, "get_child_nodes"));
 	BIND_VMETHOD(MethodInfo(Variant::ARRAY, "get_parameter_list"));
@@ -473,6 +496,7 @@ AnimationNode::AnimationNode() {
 	state = nullptr;
 	parent = nullptr;
 	filter_enabled = false;
+	did_process = false;
 }
 
 ////////////////////
@@ -825,6 +849,11 @@ void AnimationTree::_process_graph(float p_delta) {
 
 	//process
 
+	// Reset the did_process flag on all nodes
+	for (List<AnimationNode::ChildNode>::Element *E = all_nodes.front(); E; E = E->next()) {
+		E->get().node->did_process = false;
+	}
+
 	{
 		if (started) {
 			//if started, seek
@@ -833,6 +862,18 @@ void AnimationTree::_process_graph(float p_delta) {
 		}
 
 		root->_pre_process(SceneStringNames::get_singleton()->parameters_base_path, nullptr, &state, p_delta, false, Vector<StringName>());
+	}
+
+	// Check if processing occurred on each node
+	for (List<AnimationNode::ChildNode>::Element *E = all_nodes.front(); E; E = E->next()) {
+		Ref<AnimationNode> node = E->get().node;
+		// If there was a change in processing state, call the relevant script function
+		if (!node->was_processed && node->did_process) {
+			node->on_play(); // node entered
+		} else if (node->was_processed && !node->did_process) {
+			node->on_stop(); // node exited
+		}
+		node->was_processed = node->did_process;
 	}
 
 	if (!state.valid) {
@@ -1409,11 +1450,22 @@ void AnimationTree::_update_properties_for_node(const String &p_base_path, Ref<A
 		properties.push_back(pinfo);
 	}
 
-	List<AnimationNode::ChildNode> children;
-	node->get_child_nodes(&children);
+	// Accumulate all child nodes into one list
+	List<AnimationNode::ChildNode>::Element *E = all_nodes.back();
+	int start = all_nodes.size();
+	node->get_child_nodes(&all_nodes);
 
-	for (List<AnimationNode::ChildNode>::Element *E = children.front(); E; E = E->next()) {
+	if (!E) {
+		E = all_nodes.front();
+	} else {
+		E = E->next();
+	}
+	int end = all_nodes.size();
+
+	// Update properties for each child node
+	for (int i = start; E && i < end; i++) {
 		_update_properties_for_node(p_base_path + E->get().name + "/", E->get().node);
+		E = E->next();
 	}
 }
 
@@ -1426,6 +1478,7 @@ void AnimationTree::_update_properties() {
 	property_parent_map.clear();
 	input_activity_map.clear();
 	input_activity_map_get.clear();
+	all_nodes.clear();
 
 	if (root.is_valid()) {
 		_update_properties_for_node(SceneStringNames::get_singleton()->parameters_base_path, root);

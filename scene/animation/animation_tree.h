@@ -150,10 +150,10 @@ public:
 	AnimationNode();
 
 private:
-	bool did_process;
-	bool was_processed;
-	virtual void on_play();
-	virtual void on_stop();
+	float process_time;
+	float last_process_time;
+	virtual void on_play(float p_time);
+	virtual void on_stop(float p_time);
 
 	Dictionary _get_child_nodes_bind();
 };

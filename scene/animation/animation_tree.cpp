@@ -141,20 +141,20 @@ void AnimationNode::blend_animation(const StringName &p_animation, float p_time,
 	state->animation_states.push_back(anim_state);
 }
 
-void AnimationNode::on_play() {
+void AnimationNode::on_play(float p_time) {
 	if (get_script_instance()) {
-		get_script_instance()->call("on_play");
+		get_script_instance()->call("on_play", p_time);
 	}
 }
 
-void AnimationNode::on_stop() {
+void AnimationNode::on_stop(float p_time) {
 	if (get_script_instance()) {
-		get_script_instance()->call("on_stop");
+		get_script_instance()->call("on_stop", p_time);
 	}
 }
 
 bool AnimationNode::is_processing() const {
-	return was_processed;
+	return last_process_time > 0.f;
 }
 
 float AnimationNode::_pre_process(const StringName &p_base_path, AnimationNode *p_parent, State *p_state, float p_time, bool p_seek, const Vector<StringName> &p_connections) {
@@ -162,16 +162,15 @@ float AnimationNode::_pre_process(const StringName &p_base_path, AnimationNode *
 	parent = p_parent;
 	connections = p_connections;
 	state = p_state;
-	did_process = true;
 
-	float t = process(p_time, p_seek);
+	process_time = process(p_time, p_seek);
 
 	state = nullptr;
 	parent = nullptr;
 	base_path = StringName();
 	connections.clear();
 
-	return t;
+	return process_time;
 }
 
 void AnimationNode::make_invalid(const String &p_reason) {
@@ -467,8 +466,8 @@ void AnimationNode::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "filter_enabled", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_filter_enabled", "is_filter_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "filters", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_filters", "_get_filters");
 
-	BIND_VMETHOD(MethodInfo("on_play"));
-	BIND_VMETHOD(MethodInfo("on_stop"));
+	BIND_VMETHOD(MethodInfo("on_play", PropertyInfo(Variant::FLOAT, "time")));
+	BIND_VMETHOD(MethodInfo("on_stop", PropertyInfo(Variant::FLOAT, "time")));
 
 	BIND_VMETHOD(MethodInfo(Variant::DICTIONARY, "get_child_nodes"));
 	BIND_VMETHOD(MethodInfo(Variant::ARRAY, "get_parameter_list"));
@@ -496,7 +495,8 @@ AnimationNode::AnimationNode() {
 	state = nullptr;
 	parent = nullptr;
 	filter_enabled = false;
-	did_process = false;
+	process_time = -1.f;
+	last_process_time = 0.f;
 }
 
 ////////////////////
@@ -849,9 +849,9 @@ void AnimationTree::_process_graph(float p_delta) {
 
 	//process
 
-	// Reset the did_process flag on all nodes
+	// Reset process_time count on every node in tree
 	for (List<AnimationNode::ChildNode>::Element *E = all_nodes.front(); E; E = E->next()) {
-		E->get().node->did_process = false;
+		E->get().node->process_time = -1.f;
 	}
 
 	{
@@ -868,12 +868,12 @@ void AnimationTree::_process_graph(float p_delta) {
 	for (List<AnimationNode::ChildNode>::Element *E = all_nodes.front(); E; E = E->next()) {
 		Ref<AnimationNode> node = E->get().node;
 		// If there was a change in processing state, call the relevant script function
-		if (!node->was_processed && node->did_process) {
-			node->on_play(); // node entered
-		} else if (node->was_processed && !node->did_process) {
-			node->on_stop(); // node exited
+		if (node->last_process_time < 0.f && node->process_time > 0.f) {
+			node->on_play(node->process_time); // node entered
+		} else if (node->last_process_time >= 0.f && node->process_time < 0.f) {
+			node->on_stop(node->last_process_time); // node exited
 		}
-		node->was_processed = node->did_process;
+		node->last_process_time = node->process_time;
 	}
 
 	if (!state.valid) {

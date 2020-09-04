@@ -145,13 +145,13 @@ void AnimationNode::blend_animation(const StringName &p_animation, float p_time,
 
 void AnimationNode::on_play(float p_time) {
 	if (get_script_instance()) {
-		get_script_instance()->call("on_play", p_time);
+		get_script_instance()->call("_on_play", p_time);
 	}
 }
 
 void AnimationNode::on_stop(float p_time) {
 	if (get_script_instance()) {
-		get_script_instance()->call("on_stop", p_time);
+		get_script_instance()->call("_on_stop", p_time);
 	}
 }
 
@@ -167,6 +167,9 @@ float AnimationNode::_pre_process(const StringName &p_base_path, AnimationNode *
 	state = p_state;
 
 	process_time = process(p_time, p_seek);
+	if (!p_seek) {
+		advance(p_time);
+	}
 
 	state = NULL;
 	parent = NULL;
@@ -386,6 +389,12 @@ float AnimationNode::process(float p_time, bool p_seek) {
 	return 0;
 }
 
+void AnimationNode::advance(float p_delta) {
+	if (get_script_instance()) {
+		get_script_instance()->call("_advance", p_delta);
+	}
+}
+
 void AnimationNode::set_filter_path(const NodePath &p_path, bool p_enable) {
 	if (p_enable) {
 		filter[p_path] = true;
@@ -475,8 +484,9 @@ void AnimationNode::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "filter_enabled", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_filter_enabled", "is_filter_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "filters", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_filters", "_get_filters");
 
-	BIND_VMETHOD(MethodInfo("on_play", PropertyInfo(Variant::FLOAT, "time")));
-	BIND_VMETHOD(MethodInfo("on_stop", PropertyInfo(Variant::FLOAT, "time")));
+	BIND_VMETHOD(MethodInfo("_on_play", PropertyInfo(Variant::FLOAT, "time")));
+	BIND_VMETHOD(MethodInfo("_on_stop", PropertyInfo(Variant::FLOAT, "time")));
+	BIND_VMETHOD(MethodInfo("_advance", PropertyInfo(Variant::FLOAT, "delta")));
 
 	BIND_VMETHOD(MethodInfo(Variant::DICTIONARY, "get_child_nodes"));
 	BIND_VMETHOD(MethodInfo(Variant::ARRAY, "get_parameter_list"));

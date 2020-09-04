@@ -155,8 +155,10 @@ public:
 private:
 	float process_time;
 	float last_process_time;
-	virtual void on_play(float p_time);
-	virtual void on_stop(float p_time);
+
+	void on_play(float p_time);
+	void advance(float p_delta);
+	void on_stop(float p_time);
 
 	Dictionary _get_child_nodes_bind();
 };

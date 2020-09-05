@@ -48,7 +48,7 @@ Variant AnimationNodeBlendSpace2D::get_parameter_default_value(const StringName 
 
 int AnimationNodeBlendSpace2D::get_child_nodes(List<ChildNode> *r_child_nodes) {
 	int child_count = AnimationNode::get_child_nodes(r_child_nodes);
-	
+
 	if (child_count == 0) {
 		child_count = blend_points_used;
 		for (int i = 0; i < blend_points_used; i++) {

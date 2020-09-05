@@ -82,10 +82,7 @@ int AnimationNode::get_child_nodes(List<ChildNode> *r_child_nodes) {
 			Variant node = cn[E->get()];
 
 			// Some rudimentary type safety
-			ERR_CONTINUE_MSG(
-				node.get_type() != Variant::OBJECT,
-				"Expected 'AnimationNode' type values from get_child_nodes. Got '" + Variant::get_type_name(node.get_type()) + "' instead."
-			);
+			ERR_CONTINUE_MSG(node.get_type() != Variant::OBJECT, "Expected 'AnimationNode' type values from get_child_nodes. Got '" + Variant::get_type_name(node.get_type()) + "' instead.");
 
 			child.name = E->get();
 			child.node = cn[E->get()];

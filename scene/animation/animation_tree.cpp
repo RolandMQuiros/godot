@@ -484,9 +484,9 @@ void AnimationNode::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "filter_enabled", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_filter_enabled", "is_filter_enabled");
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "filters", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR | PROPERTY_USAGE_INTERNAL), "_set_filters", "_get_filters");
 
-	BIND_VMETHOD(MethodInfo("_on_play", PropertyInfo(Variant::FLOAT, "time")));
-	BIND_VMETHOD(MethodInfo("_on_stop", PropertyInfo(Variant::FLOAT, "time")));
-	BIND_VMETHOD(MethodInfo("_advance", PropertyInfo(Variant::FLOAT, "delta")));
+	BIND_VMETHOD(MethodInfo("_on_play", PropertyInfo(Variant::REAL, "time")));
+	BIND_VMETHOD(MethodInfo("_on_stop", PropertyInfo(Variant::REAL, "time")));
+	BIND_VMETHOD(MethodInfo("_advance", PropertyInfo(Variant::REAL, "delta")));
 
 	BIND_VMETHOD(MethodInfo(Variant::DICTIONARY, "get_child_nodes"));
 	BIND_VMETHOD(MethodInfo(Variant::ARRAY, "get_parameter_list"));
